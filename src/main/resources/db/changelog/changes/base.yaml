@@ -1,20 +1,21 @@
 databaseChangeLog:
 - changeSet:
-    id: 1566146120317-1
-    author: albvs (generated)
+    id: 1774138719006-1
+    author: anton (generated)
     changes:
     - createTable:
         columns:
         - column:
             autoIncrement: true
             constraints:
+              nullable: false
               primaryKey: true
               primaryKeyName: passportPK
             name: id
             type: BIGINT
         - column:
             name: created_date
-            type: TIMESTAMP WITHOUT TIME ZONE
+            type: TIMESTAMP(6) WITH TIME ZONE
         - column:
             name: description
             type: VARCHAR(255)
@@ -23,14 +24,16 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: passport
 - changeSet:
-    id: 1566146120317-2
-    author: albvs (generated)
+    id: 1774138719006-2
+    author: anton (generated)
     changes:
     - createTable:
         columns:
         - column:
             constraints:
+              nullable: false
               primaryKey: true
+              primaryKeyName: passport_itemsPK
             name: passport_id
             type: BIGINT
         - column:
@@ -38,19 +41,22 @@ databaseChangeLog:
             type: BIGINT
         - column:
             constraints:
+              nullable: false
               primaryKey: true
+              primaryKeyName: passport_itemsPK
             name: items_order
             type: INTEGER
         tableName: passport_items
 - changeSet:
-    id: 1566146120317-3
-    author: albvs (generated)
+    id: 1774138719006-3
+    author: anton (generated)
     changes:
     - createTable:
         columns:
         - column:
             autoIncrement: true
             constraints:
+              nullable: false
               primaryKey: true
               primaryKeyName: profilePK
             name: id
@@ -60,7 +66,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         - column:
             name: created_date
-            type: TIMESTAMP WITHOUT TIME ZONE
+            type: TIMESTAMP(6) WITH TIME ZONE
         - column:
             name: first_name
             type: VARCHAR(255)
@@ -90,14 +96,16 @@ databaseChangeLog:
             type: BIGINT
         tableName: profile
 - changeSet:
-    id: 1566146120317-4
-    author: albvs (generated)
+    id: 1774138719006-4
+    author: anton (generated)
     changes:
     - createTable:
         columns:
         - column:
             constraints:
+              nullable: false
               primaryKey: true
+              primaryKeyName: profile_passportPK
             name: profile_id
             type: BIGINT
         - column:
@@ -107,47 +115,49 @@ databaseChangeLog:
             type: BIGINT
         - column:
             constraints:
+              nullable: false
               primaryKey: true
+              primaryKeyName: profile_passportPK
             name: passports_order
             type: INTEGER
-        tableName: profile_passports
+        tableName: profile_passport
 - changeSet:
-    id: 1566146120317-5
-    author: albvs (generated)
+    id: 1774138719006-5
+    author: anton (generated)
     changes:
     - addUniqueConstraint:
         columnNames: passports_id
-        constraintName: UK_jcvbn3escnfh4e9e0yn7iakax
-        tableName: profile_passports
+        constraintName: UC_PROFILE_PASSPORTPASSPORTS_ID_COL
+        tableName: profile_passport
 - changeSet:
-    id: 1566146120317-6
-    author: albvs (generated)
+    id: 1774138719006-6
+    author: anton (generated)
     changes:
     - addForeignKeyConstraint:
         baseColumnNames: profile_id
-        baseTableName: profile_passports
-        constraintName: FK4dc4p67070ubo6u1v3ykpneol
+        baseTableName: profile_passport
+        constraintName: FKfxew29j0hsrcmyfqryirq7mug
         deferrable: false
         initiallyDeferred: false
         referencedColumnNames: id
         referencedTableName: profile
         validate: true
 - changeSet:
-    id: 1566146120317-7
-    author: albvs (generated)
+    id: 1774138719006-7
+    author: anton (generated)
     changes:
     - addForeignKeyConstraint:
         baseColumnNames: passports_id
-        baseTableName: profile_passports
-        constraintName: FKib0ji4j5f1ncfr5dtwjopg097
+        baseTableName: profile_passport
+        constraintName: FKhfujj22nsa8g5poku4m9f2ojd
         deferrable: false
         initiallyDeferred: false
         referencedColumnNames: id
         referencedTableName: passport
         validate: true
 - changeSet:
-    id: 1566146120317-8
-    author: albvs (generated)
+    id: 1774138719006-8
+    author: anton (generated)
     changes:
     - addForeignKeyConstraint:
         baseColumnNames: passport_id
