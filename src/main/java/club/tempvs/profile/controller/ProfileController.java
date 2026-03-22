@@ -47,6 +47,13 @@ public class ProfileController {
         return mvcConversionService.convert(profile, ProfileDto.class);
     }
 
+    @PutMapping("/profile/{id}")
+    public ProfileDto update(@PathVariable Long id, @Validated @RequestBody ProfileDto profileDto) {
+        Profile profile = mvcConversionService.convert(profileDto, Profile.class);
+        Profile persistentProfile = profileService.update(id, profile);
+        return mvcConversionService.convert(persistentProfile, ProfileDto.class);
+    }
+
     @GetMapping("/club-profile")
     public List<ProfileDto> getClubProfiles(@RequestParam Long userId) {
         return profileService.getClubProfiles(userId)

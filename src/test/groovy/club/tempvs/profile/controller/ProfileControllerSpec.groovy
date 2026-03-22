@@ -77,6 +77,23 @@ class ProfileControllerSpec extends Specification {
         result == profileDto
     }
 
+    def "update profile"() {
+        given:
+        Long id = 1L
+
+        when:
+        ProfileDto result = profileController.update(id, profileDto)
+
+        then:
+        1 * mvcConversionService.convert(profileDto, Profile.class) >> profile
+        1 * profileService.update(id, profile) >> profile
+        1 * mvcConversionService.convert(profile, ProfileDto.class) >> profileDto
+        0 * _
+
+        and:
+        result == profileDto
+    }
+
     def "get club profiles"() {
         given:
         Long userId = 1L

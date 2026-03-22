@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.is
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -186,6 +187,39 @@ class ProfileControllerIntegrationSpec extends Specification {
                 .header(USER_INFO_HEADER, userInfoValue)
                 .header(AUTHORIZATION_HEADER, TOKEN))
                     .andExpect(status().isNotFound())
+    }
+
+    def "update user profile"() {
+        given:
+        Long userId = 1L
+        String userInfoValue = buildUserInfoValue(userId)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        profileRepository.save(profile)
+        String payload = """
+        {
+          "firstName": "updated",
+          "lastName": "profile",
+          "nickName": "nick",
+          "profileEmail": "updated@email.com",
+          "location": "Earth",
+          "alias": "alias"
+        }
+        """
+
+        expect:
+        mvc.perform(put("/profile/" + profile.id)
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .content(payload)
+                .header(USER_INFO_HEADER, userInfoValue)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("firstName", is("updated")))
+                .andExpect(jsonPath("lastName", is("profile")))
+                .andExpect(jsonPath("nickName", is("nick")))
+                .andExpect(jsonPath("profileEmail", is("updated@email.com")))
+                .andExpect(jsonPath("location", is("Earth")))
+                .andExpect(jsonPath("alias", is("alias")))
     }
 
     def "get club profiles"() {

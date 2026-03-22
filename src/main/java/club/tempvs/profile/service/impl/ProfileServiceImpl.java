@@ -11,6 +11,7 @@ import club.tempvs.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -72,6 +73,20 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    public Profile update(Long id, Profile profile) {
+        Profile persistentProfile = fetchProfile(id);
+        Long currentUserId = userHolder.getUserId();
+
+        if (!persistentProfile.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("Access denied");
+        }
+
+        validateUpdate(profile, persistentProfile.getType());
+        applyUpdates(persistentProfile, profile);
+        return save(persistentProfile);
+    }
+
+    @Override
     public void uploadAvatar(Long profileId, ImageDto imageDto) {
         Long currentUserId = userHolder.getUserId();
         Long userId = profileRepository.findById(profileId)
@@ -107,5 +122,32 @@ public class ProfileServiceImpl implements ProfileService {
 
     private int countClubProfilesByUserId(Long userId) {
         return profileRepository.countByTypeAndUserId(Type.CLUB, userId);
+    }
+
+    private void validateUpdate(Profile profile, Type type) {
+        if (!StringUtils.hasText(profile.getFirstName())) {
+            throw new IllegalArgumentException("First name can not be blank");
+        }
+
+        if (!StringUtils.hasText(profile.getLastName())) {
+            throw new IllegalArgumentException("Last name can not be blank");
+        }
+
+        if (type == Type.CLUB && profile.getPeriod() == null) {
+            throw new IllegalArgumentException("Period can not be blank");
+        }
+    }
+
+    private void applyUpdates(Profile target, Profile source) {
+        target.setFirstName(source.getFirstName());
+        target.setLastName(source.getLastName());
+        target.setNickName(source.getNickName());
+        target.setProfileEmail(source.getProfileEmail());
+        target.setLocation(source.getLocation());
+        target.setAlias(source.getAlias());
+
+        if (target.getType() == Type.CLUB) {
+            target.setPeriod(source.getPeriod());
+        }
     }
 }

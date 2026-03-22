@@ -15,6 +15,8 @@ public interface ProfileService {
 
     Profile getUserProfile();
 
+    Profile update(Long id, Profile profile);
+
     List<Profile> getClubProfiles(Long userId);
 
     void uploadAvatar(Long profileId, ImageDto imageDto);

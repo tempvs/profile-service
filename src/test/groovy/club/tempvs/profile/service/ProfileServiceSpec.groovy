@@ -165,6 +165,59 @@ class ProfileServiceSpec extends Specification {
         exception.message == 'No value present'
     }
 
+    def "update profile"() {
+        given:
+        Long profileId = 1L
+        Long userId = 2L
+        def persistentProfile = new Profile(userId: userId, type: Type.USER)
+        def update = new Profile(
+                firstName: 'Updated',
+                lastName: 'User',
+                nickName: 'Nick',
+                profileEmail: 'user@email.com',
+                location: 'Somewhere',
+                alias: 'Alias'
+        )
+
+        when:
+        Profile result = profileService.update(profileId, update)
+
+        then:
+        1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
+        1 * userHolder.userId >> userId
+        1 * profileRepository.save(persistentProfile) >> persistentProfile
+        0 * _
+
+        and:
+        persistentProfile.firstName == 'Updated'
+        persistentProfile.lastName == 'User'
+        persistentProfile.nickName == 'Nick'
+        persistentProfile.profileEmail == 'user@email.com'
+        persistentProfile.location == 'Somewhere'
+        persistentProfile.alias == 'Alias'
+        result == persistentProfile
+    }
+
+    def "update profile for wrong user"() {
+        given:
+        Long profileId = 1L
+        Long currentUserId = 2L
+        def persistentProfile = new Profile(userId: 3L, type: Type.USER)
+        def update = new Profile(firstName: 'Updated', lastName: 'User')
+
+        when:
+        profileService.update(profileId, update)
+
+        then:
+        1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
+        1 * userHolder.userId >> currentUserId
+        0 * _
+
+        and:
+        Exception exception = thrown AccessDeniedException
+        exception.message == 'Access denied'
+    }
+
     def "get club profiles for user"() {
         given:
         Long userId = 1L
