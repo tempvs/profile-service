@@ -1,115 +1,154 @@
 buildscript {
-	ext {
-		springBootVersion = '2.2.1.RELEASE'
-	}
-	repositories {
-		mavenCentral()
-	}
 	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-		classpath("org.springframework.cloud:spring-cloud-contract-gradle-plugin:2.0.1.RELEASE")
+		classpath 'org.liquibase:liquibase-core:4.33.0'
 	}
 }
 
 plugins {
-	id 'org.springframework.boot' version '2.2.1.RELEASE'
-	id 'org.liquibase.gradle' version '2.0.1'
+	id 'org.springframework.boot' version '4.0.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.liquibase.gradle' version '3.1.0'
 	id 'java'
 	id 'groovy'
 }
 
-apply plugin: 'io.spring.dependency-management'
-
 group = 'club.tempvs'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
 
-repositories {
-	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
-}
-
-ext {
-	set('springCloudVersion', 'Hoxton.RC2')
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
 configurations {
-	integrationTestImplementation.extendsFrom testImplementation
-	integrationTestRuntime.extendsFrom testRuntime
-
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
 }
 
+repositories {
+	mavenCentral()
+}
+
 liquibase {
+	runList = "main"
 	activities {
 		main {
-			changeLogFile 'src/main/resources/db/changelog/changes/' + System.getenv('LIQUIBASE_DIFF_FILENAME')
-			url System.getenv('JDBC_DATABASE_URL')
-			referenceUrl 'hibernate:spring:club.tempvs.profile.domain?dialect=org.hibernate.dialect.PostgreSQL95Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy'
-			username System.getenv('JDBC_DATABASE_USERNAME')
-			password System.getenv('JDBC_DATABASE_PASSWORD')
+			changelogFile 'src/main/resources/db/changelog/changes/base.yaml'
+			url 'jdbc:postgresql://localhost:5432/tempvs_profile'
+			referenceUrl 'hibernate:spring:club.tempvs.profile.domain?dialect=org.hibernate.dialect.PostgreSQLDialect&hibernate.physical_naming_strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy'
+			username 'postgres'
+			password 'pass'
 		}
 	}
 }
 
 diff.dependsOn compileJava
-diffChangeLog.dependsOn compileJava
 generateChangelog.dependsOn compileJava
+
+ext {
+	zonkyTestVersion = '2.7.1'
+	liquibaseVersion = '4.33.0'
+	hibernateVersion = '6.6.43.Final'
+	picoCliVersion = '4.7.6'
+	groovyVersion = '4.0.28'
+	spockVersion = '2.4-M6-groovy-4.0'
+}
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
-	implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
-	implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
-	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-	implementation "org.postgresql:postgresql"
-	//lombok
-	annotationProcessor 'org.projectlombok:lombok'
+	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+	implementation 'org.postgresql:postgresql'
 	compileOnly 'org.projectlombok:lombok'
-	//liquibase
-    implementation "org.liquibase:liquibase-core" //to fire changelog migration on startup
-    liquibaseRuntime "org.liquibase:liquibase-core"
+	annotationProcessor 'org.projectlombok:lombok'
+	liquibaseRuntime "org.liquibase:liquibase-core:${liquibaseVersion}"
+	liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibaseVersion}"
+	liquibaseRuntime "info.picocli:picocli:${picoCliVersion}"
 	liquibaseRuntime "org.postgresql:postgresql"
-	liquibaseRuntime 'org.liquibase.ext:liquibase-hibernate5:3.6'
-	liquibaseRuntime 'org.springframework.boot:spring-boot-starter-data-jpa'
+	liquibaseRuntime("org.springframework.boot:spring-boot-starter-data-jpa") {
+		exclude group: "org.hibernate.orm", module: "hibernate-core"
+		exclude group: "org.hibernate.orm", module: "hibernate-envers"
+	}
+	liquibaseRuntime "org.hibernate.orm:hibernate-core:${hibernateVersion}"
+	liquibaseRuntime "org.hibernate.orm:hibernate-envers:${hibernateVersion}"
 	liquibaseRuntime sourceSets.main.output
-	//testing
-	testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-stub-runner'
-	testImplementation 'com.h2database:h2:1.4.194'
-	testImplementation  'org.springframework.cloud:spring-cloud-stream-test-support'
-	testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
-	testImplementation "org.spockframework:spock-spring:1.3-groovy-2.5"
+	testImplementation "io.zonky.test:embedded-database-spring-test:${zonkyTestVersion}"
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
+	testImplementation 'org.apache.groovy:groovy'
+	testImplementation 'org.apache.groovy:groovy-json'
+	testImplementation "org.spockframework:spock-core:${spockVersion}"
+	testImplementation "org.spockframework:spock-spring:${spockVersion}"
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 bootJar {
 	archiveBaseName = 'tempvs-profile'
-	archiveVersion =  ''
+	archiveVersion = ''
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
 }
 
 sourceSets {
 	integrationTest {
 		groovy {
-			compileClasspath += main.output + test.output
-			runtimeClasspath += main.output + test.output
-			srcDir file('src/integration-test/groovy')
+			srcDir 'src/integration-test/groovy'
 		}
-
-		resources.srcDir file('src/integration-test/resources')
+		resources {
+			srcDir 'src/integration-test/resources'
+		}
+		compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+		runtimeClasspath += output + compileClasspath
 	}
 }
 
-task integrationTest(type: Test) {
+tasks.register('integrationTest', Test) {
+	group = 'verification'
 	testClassesDirs = sourceSets.integrationTest.output.classesDirs
 	classpath = sourceSets.integrationTest.runtimeClasspath
+	outputs.upToDateWhen { false }
+	useJUnitPlatform()
+}
+
+configurations {
+	integrationTestImplementation.extendsFrom testImplementation
+	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+configurations.liquibaseRuntime {
+	resolutionStrategy {
+		force "org.hibernate.orm:hibernate-core:${hibernateVersion}"
+		force "org.hibernate.orm:hibernate-envers:${hibernateVersion}"
+	}
+}
+
+configurations {
+	groovyCompiler
+}
+
+dependencies {
+	groovyCompiler platform("org.apache.groovy:groovy-bom:${groovyVersion}")
+	groovyCompiler "org.apache.groovy:groovy:${groovyVersion}"
+	groovyCompiler "org.apache.groovy:groovy-ant:${groovyVersion}"
+	groovyCompiler "org.apache.groovy:groovy-astbuilder:${groovyVersion}"
+}
+
+tasks.withType(GroovyCompile).configureEach {
+	groovyClasspath = configurations.groovyCompiler
+}
+
+configurations.configureEach {
+	resolutionStrategy.eachDependency { details ->
+		if (details.requested.group == 'org.apache.groovy') {
+			details.useVersion groovyVersion
+		}
+	}
 }

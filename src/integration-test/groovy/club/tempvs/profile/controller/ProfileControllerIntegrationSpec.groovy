@@ -4,15 +4,16 @@ import club.tempvs.profile.dao.ProfileRepository
 import club.tempvs.profile.domain.Profile
 import club.tempvs.profile.domain.Profile.Type
 import club.tempvs.profile.dto.UserInfoDto
-import com.fasterxml.jackson.databind.ObjectMapper
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.ResourceUtils
 import spock.lang.Specification
+import tools.jackson.databind.json.JsonMapper
 
 import java.nio.file.Files
 
@@ -26,6 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureEmbeddedDatabase(
+        type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES,
+        replace = AutoConfigureEmbeddedDatabase.Replace.ANY
+)
 @ActiveProfiles("test")
 class ProfileControllerIntegrationSpec extends Specification {
 
@@ -36,7 +41,7 @@ class ProfileControllerIntegrationSpec extends Specification {
     @Autowired
     private MockMvc mvc
     @Autowired
-    private ObjectMapper objectMapper
+    private JsonMapper jsonMapper
     @Autowired
     private ProfileRepository profileRepository
 
@@ -256,6 +261,6 @@ class ProfileControllerIntegrationSpec extends Specification {
 
     private String buildUserInfoValue(Long id) throws Exception {
         UserInfoDto userInfoDto = new UserInfoDto(userId: id, lang: Locale.ENGLISH.language)
-        objectMapper.writeValueAsString(userInfoDto)
+        jsonMapper.writeValueAsString(userInfoDto)
     }
 }

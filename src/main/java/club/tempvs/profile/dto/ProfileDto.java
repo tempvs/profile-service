@@ -5,11 +5,12 @@ import club.tempvs.profile.domain.Profile.Period;
 import club.tempvs.profile.dto.validation.Scope.Create;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import java.time.Instant;
 import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 
 @Data
 public class ProfileDto {

@@ -4,19 +4,19 @@ import club.tempvs.profile.domain.Profile
 import club.tempvs.profile.domain.Profile.Period
 import club.tempvs.profile.domain.Profile.Type
 import club.tempvs.profile.dto.ErrorsDto
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import spock.lang.Specification
 import spock.lang.Subject
+import tools.jackson.databind.json.JsonMapper
 
 class ProfileValidatorSpec extends Specification {
 
-    MessageSource messageSource = Mock MessageSource
-    ObjectMapper objectMapper = Mock ObjectMapper
+    def messageSource = Mock(MessageSource)
+    def jsonMapper = Mock(JsonMapper)
 
     @Subject
-    ProfileValidator profileValidator = new ProfileValidator(messageSource, objectMapper)
+    ProfileValidator profileValidator = new ProfileValidator(messageSource, jsonMapper)
 
     def "validate user profile"() {
         given:
@@ -41,7 +41,7 @@ class ProfileValidatorSpec extends Specification {
 
         then:
         1 * messageSource.getMessage(messageKey, null, messageKey, locale) >> failureMessage
-        1 * objectMapper.writeValueAsString(errorsDto) >> serializedErrorsDto
+        1 * jsonMapper.writeValueAsString(errorsDto) >> serializedErrorsDto
         0 * _
 
         and:
@@ -64,7 +64,7 @@ class ProfileValidatorSpec extends Specification {
 
         then:
         1 * messageSource.getMessage(messageKey, null, messageKey, locale) >> failureMessage
-        1 * objectMapper.writeValueAsString(errorsDto) >> serializedErrorsDto
+        1 * jsonMapper.writeValueAsString(errorsDto) >> serializedErrorsDto
         0 * _
 
         and:

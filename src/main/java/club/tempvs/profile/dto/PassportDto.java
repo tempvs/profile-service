@@ -1,9 +1,13 @@
 package club.tempvs.profile.dto;
 
-import javax.validation.constraints.NotBlank;
+import lombok.Data;
+
 import java.time.Instant;
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
+
+@Data
 public class PassportDto {
 
     private Long id;

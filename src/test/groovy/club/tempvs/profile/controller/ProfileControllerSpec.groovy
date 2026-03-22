@@ -10,15 +10,15 @@ import spock.lang.Subject
 
 class ProfileControllerSpec extends Specification {
 
-    ConversionService mvcConversionService = Mock ConversionService
-    ProfileService profileService = Mock ProfileService
+    def mvcConversionService = Mock(ConversionService)
+    def profileService = Mock(ProfileService)
 
     @Subject
     ProfileController profileController = new ProfileController(mvcConversionService, profileService)
 
-    Profile profile = Mock Profile
-    ProfileDto profileDto = Mock ProfileDto
-    ImageDto imageDto = Mock ImageDto
+    def profile = Mock(Profile)
+    def profileDto = Mock(ProfileDto)
+    def imageDto = Mock(ImageDto)
 
     def "create user profile"() {
         when:

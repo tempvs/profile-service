@@ -14,16 +14,16 @@ import org.springframework.security.access.AccessDeniedException
 
 class ProfileServiceSpec extends Specification {
 
-    UserHolder userHolder = Mock UserHolder
-    ProfileValidator profileValidator = Mock ProfileValidator
-    ProfileRepository profileRepository = Mock ProfileRepository
-    ImageService imageService = Mock ImageService
+    def userHolder = Mock(UserHolder)
+    def profileValidator = Mock(ProfileValidator)
+    def profileRepository = Mock(ProfileRepository)
+    def imageService = Mock(ImageService)
 
     @Subject
     ProfileService profileService = new ProfileServiceImpl(userHolder, profileValidator, profileRepository, imageService)
 
-    Profile profile = Mock Profile
-    ImageDto imageDto = Mock ImageDto
+    def profile = Mock(Profile)
+    def imageDto = Mock(ImageDto)
 
     def "create club profile"() {
         given:

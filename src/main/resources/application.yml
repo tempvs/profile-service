@@ -1,0 +1,10 @@
+server:
+  port: 8087
+  forward-headers-strategy: framework
+spring:
+  datasource:
+    url: ${JDBC_URL:jdbc:postgresql://localhost:5432/tempvs_profile}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:pass}
+authorization:
+  token: ${SECURITY_TOKEN:security_token}

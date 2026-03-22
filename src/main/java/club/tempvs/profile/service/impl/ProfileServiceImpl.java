@@ -8,8 +8,6 @@ import club.tempvs.profile.domain.Profile.Type;
 import club.tempvs.profile.dto.ImageDto;
 import club.tempvs.profile.service.ImageService;
 import club.tempvs.profile.service.ProfileService;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -90,38 +88,23 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    @HystrixCommand(commandProperties = {
-            @HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE")
-    })
     public List<Profile> getClubProfiles(Long userId) {
         return profileRepository.findAllByTypeAndUserId(Type.CLUB, userId);
     }
 
-    @HystrixCommand(commandProperties = {
-            @HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE")
-    })
     private Profile fetchProfile(Long id) {
         return profileRepository.findById(id)
                 .get();
     }
 
-    @HystrixCommand(commandProperties = {
-            @HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE")
-    })
     private Profile save(Profile profile) {
         return profileRepository.save(profile);
     }
 
-    @HystrixCommand(commandProperties = {
-            @HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE")
-    })
     private List<Profile> findUserProfileByUserId(Long userId) {
         return profileRepository.findAllByTypeAndUserId(Type.USER, userId);
     }
 
-    @HystrixCommand(commandProperties = {
-            @HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE")
-    })
     private int countClubProfilesByUserId(Long userId) {
         return profileRepository.countByTypeAndUserId(Type.CLUB, userId);
     }
