@@ -23,13 +23,9 @@ public class ProfileDto {
     private String firstName;
     @NotBlank
     private String lastName;
-    @Null(groups = Create.UserProfile.class)
     private String nickName;
-    @Null(groups = Create.UserProfile.class)
     private String profileEmail;
-    @Null(groups = Create.UserProfile.class)
     private String location;
-    @Null(groups = Create.UserProfile.class)
     private String alias;
     @Null(groups = {Create.UserProfile.class, Create.ClubProfile.class})
     private Boolean isActive;

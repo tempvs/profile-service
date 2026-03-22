@@ -1,4 +1,8 @@
 {
   "firstName": "first name",
-  "lastName": "last name"
+  "lastName": "last name",
+  "nickName": "nickname",
+  "profileEmail": "user@email.com",
+  "location": "Earth",
+  "alias": "User-Alias"
 }

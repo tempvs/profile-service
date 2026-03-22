@@ -62,6 +62,10 @@ class ProfileControllerIntegrationSpec extends Specification {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("firstName", is("first name")))
                     .andExpect(jsonPath("lastName", is("last name")))
+                    .andExpect(jsonPath("nickName", is("nickname")))
+                    .andExpect(jsonPath("profileEmail", is("user@email.com")))
+                    .andExpect(jsonPath("location", is("Earth")))
+                    .andExpect(jsonPath("alias", is("user-alias")))
                     .andExpect(jsonPath("type", is("USER")))
 
     }
