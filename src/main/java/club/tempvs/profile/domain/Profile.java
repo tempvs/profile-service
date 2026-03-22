@@ -18,6 +18,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.validation.constraints.NotBlank;
@@ -48,6 +50,11 @@ public class Profile {
     @Size(max = 20)
     @OrderColumn
     @OneToMany(cascade = ALL, fetch = EAGER)
+    @JoinTable(
+            name = "profile_passport",
+            joinColumns = @JoinColumn(name = "profile_id"),
+            inverseJoinColumns = @JoinColumn(name = "passports_id")
+    )
     private List<Passport> passports = new ArrayList<>();
     @NotNull
     @Enumerated(STRING)
