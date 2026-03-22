@@ -38,6 +38,8 @@ class ProfileServiceSpec extends Specification {
         1 * profile.setType(Type.CLUB)
         1 * profile.setUserId(userId)
         1 * profile.setIsActive(Boolean.TRUE)
+        1 * profile.getAlias() >> null
+        1 * profile.setAlias(null)
         1 * profileRepository.save(profile) >> profile
         0 * _
 
@@ -59,6 +61,8 @@ class ProfileServiceSpec extends Specification {
         1 * profile.setType(Type.USER)
         1 * profile.setUserId(userId)
         1 * profile.setIsActive(Boolean.TRUE)
+        1 * profile.getAlias() >> null
+        1 * profile.setAlias(null)
         1 * profileRepository.save(profile) >> profile
         0 * _
 
@@ -103,13 +107,26 @@ class ProfileServiceSpec extends Specification {
 
     def "get profile"() {
         given:
-        Long id = 1L
+        String id = '1'
 
         when:
         Profile result = profileService.get(id)
 
         then:
-        1 * profileRepository.findById(id) >> Optional.of(profile)
+        1 * profileRepository.findByAlias('1') >> Optional.empty()
+        1 * profileRepository.findById(1L) >> Optional.of(profile)
+        0 * _
+
+        and:
+        result == profile
+    }
+
+    def "get profile by alias first"() {
+        when:
+        Profile result = profileService.get('albvs')
+
+        then:
+        1 * profileRepository.findByAlias('albvs') >> Optional.of(profile)
         0 * _
 
         and:
@@ -118,18 +135,32 @@ class ProfileServiceSpec extends Specification {
 
     def "get missing profile"() {
         given:
-        Long id = 1L
+        String id = '1'
 
         when:
         profileService.get(id)
 
         then:
-        1 * profileRepository.findById(id) >> Optional.empty()
+        1 * profileRepository.findByAlias('1') >> Optional.empty()
+        1 * profileRepository.findById(1L) >> Optional.empty()
         0 * _
 
         and:
         Exception exception = thrown NoSuchElementException
         exception.message == 'No value present'
+    }
+
+    def "get missing alias profile"() {
+        when:
+        profileService.get('missing-alias')
+
+        then:
+        1 * profileRepository.findByAlias('missing-alias') >> Optional.empty()
+        0 * _
+
+        and:
+        Exception exception = thrown NoSuchElementException
+        exception.message == 'Profile not found'
     }
 
     def "get user profile"() {
@@ -169,7 +200,7 @@ class ProfileServiceSpec extends Specification {
         given:
         Long profileId = 1L
         Long userId = 2L
-        def persistentProfile = new Profile(userId: userId, type: Type.USER)
+        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER)
         def update = new Profile(
                 firstName: 'Updated',
                 lastName: 'User',
@@ -185,6 +216,7 @@ class ProfileServiceSpec extends Specification {
         then:
         1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
         1 * userHolder.userId >> userId
+        1 * profileRepository.existsByAliasAndIdNot('alias', profileId) >> false
         1 * profileRepository.save(persistentProfile) >> persistentProfile
         0 * _
 
@@ -194,7 +226,7 @@ class ProfileServiceSpec extends Specification {
         persistentProfile.nickName == 'Nick'
         persistentProfile.profileEmail == 'user@email.com'
         persistentProfile.location == 'Somewhere'
-        persistentProfile.alias == 'Alias'
+        persistentProfile.alias == 'alias'
         result == persistentProfile
     }
 
@@ -216,6 +248,47 @@ class ProfileServiceSpec extends Specification {
         and:
         Exception exception = thrown AccessDeniedException
         exception.message == 'Access denied'
+    }
+
+    def "update profile rejects numeric alias"() {
+        given:
+        Long profileId = 1L
+        Long userId = 2L
+        def persistentProfile = new Profile(userId: userId, type: Type.USER)
+        def update = new Profile(firstName: 'Updated', lastName: 'User', alias: '12345')
+
+        when:
+        profileService.update(profileId, update)
+
+        then:
+        1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
+        1 * userHolder.userId >> userId
+        0 * _
+
+        and:
+        Exception exception = thrown IllegalArgumentException
+        exception.message == 'Alias must start with a letter and contain only lowercase letters, digits, or hyphens'
+    }
+
+    def "update profile rejects duplicate alias"() {
+        given:
+        Long profileId = 1L
+        Long userId = 2L
+        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER)
+        def update = new Profile(firstName: 'Updated', lastName: 'User', alias: 'alias')
+
+        when:
+        profileService.update(profileId, update)
+
+        then:
+        1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
+        1 * userHolder.userId >> userId
+        1 * profileRepository.existsByAliasAndIdNot('alias', profileId) >> true
+        0 * _
+
+        and:
+        Exception exception = thrown IllegalArgumentException
+        exception.message == 'Alias is already in use'
     }
 
     def "get club profiles for user"() {

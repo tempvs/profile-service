@@ -36,7 +36,7 @@ public class ProfileController {
     }
 
     @GetMapping("/profile/{id}")
-    public ProfileDto get(@PathVariable Long id) {
+    public ProfileDto get(@PathVariable String id) {
         Profile profile = profileService.get(id);
         return mvcConversionService.convert(profile, ProfileDto.class);
     }

@@ -11,7 +11,7 @@ public interface ProfileService {
 
     Profile createClubProfile(Profile profile);
 
-    Profile get(Long id);
+    Profile get(String aliasOrId);
 
     Profile getUserProfile();
 

@@ -50,7 +50,7 @@ class ProfileControllerSpec extends Specification {
 
     def "get profile"() {
         given:
-        Long id = 1
+        String id = '1'
 
         when:
         ProfileDto result = profileController.get(id)

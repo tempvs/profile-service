@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1774149900000-1
+      author: codex
+      changes:
+        - addUniqueConstraint:
+            columnNames: alias
+            constraintName: uk_profile_alias
+            tableName: profile

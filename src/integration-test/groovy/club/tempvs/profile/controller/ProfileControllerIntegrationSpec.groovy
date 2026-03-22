@@ -143,6 +143,28 @@ class ProfileControllerIntegrationSpec extends Specification {
                     .andExpect(jsonPath("type", is("USER")))
     }
 
+    def "get profile by alias"() {
+        given:
+        Long userId = 1L
+        Profile profile = new Profile(
+                firstName: 'firstName',
+                lastName: 'lastName',
+                userId: userId,
+                alias: 'albvs',
+                type: Type.USER
+        )
+        profileRepository.save(profile)
+
+        expect:
+        mvc.perform(get('/profile/albvs')
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath('id', is(profile.id.intValue())))
+                .andExpect(jsonPath('alias', is('albvs')))
+    }
+
     def "get user profile"() {
         given:
         Long userId = 1L
@@ -220,6 +242,55 @@ class ProfileControllerIntegrationSpec extends Specification {
                 .andExpect(jsonPath("profileEmail", is("updated@email.com")))
                 .andExpect(jsonPath("location", is("Earth")))
                 .andExpect(jsonPath("alias", is("alias")))
+    }
+
+    def "update user profile with numeric alias"() {
+        given:
+        Long userId = 1L
+        String userInfoValue = buildUserInfoValue(userId)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        profileRepository.save(profile)
+        String payload = """
+        {
+          "firstName": "updated",
+          "lastName": "profile",
+          "alias": "12345"
+        }
+        """
+
+        expect:
+        mvc.perform(put("/profile/" + profile.id)
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .content(payload)
+                .header(USER_INFO_HEADER, userInfoValue)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isBadRequest())
+    }
+
+    def "update user profile with duplicate alias"() {
+        given:
+        Long userId = 1L
+        String userInfoValue = buildUserInfoValue(userId)
+        profileRepository.save(new Profile(firstName: 'other', lastName: 'user', userId: 2L, alias: 'taken-alias', type: Type.USER))
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        profileRepository.save(profile)
+        String payload = """
+        {
+          "firstName": "updated",
+          "lastName": "profile",
+          "alias": "taken-alias"
+        }
+        """
+
+        expect:
+        mvc.perform(put("/profile/" + profile.id)
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .content(payload)
+                .header(USER_INFO_HEADER, userInfoValue)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isBadRequest())
     }
 
     def "get club profiles"() {
