@@ -34,6 +34,7 @@ public class SecurityConfiguration {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/profile/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/user-profile").permitAll()
                         .requestMatchers(HttpMethod.GET, "/club-profile").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e

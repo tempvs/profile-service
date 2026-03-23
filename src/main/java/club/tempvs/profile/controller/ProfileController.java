@@ -47,11 +47,22 @@ public class ProfileController {
         return mvcConversionService.convert(profile, ProfileDto.class);
     }
 
+    @GetMapping("/user-profile")
+    public ProfileDto getUserProfile(@RequestParam Long userId) {
+        Profile profile = profileService.getUserProfile(userId);
+        return mvcConversionService.convert(profile, ProfileDto.class);
+    }
+
     @PutMapping("/profile/{id}")
     public ProfileDto update(@PathVariable Long id, @Validated @RequestBody ProfileDto profileDto) {
         Profile profile = mvcConversionService.convert(profileDto, Profile.class);
         Profile persistentProfile = profileService.update(id, profile);
         return mvcConversionService.convert(persistentProfile, ProfileDto.class);
+    }
+
+    @DeleteMapping("/profile/{id}")
+    public void deleteClubProfile(@PathVariable Long id) {
+        profileService.deleteClubProfile(id);
     }
 
     @GetMapping("/club-profile")

@@ -7,10 +7,9 @@ import club.tempvs.profile.domain.Profile
 import club.tempvs.profile.domain.Profile.Type
 import club.tempvs.profile.dto.ImageDto
 import club.tempvs.profile.service.impl.ProfileServiceImpl
+import org.springframework.security.access.AccessDeniedException
 import spock.lang.Specification
 import spock.lang.Subject
-
-import org.springframework.security.access.AccessDeniedException
 
 class ProfileServiceSpec extends Specification {
 
@@ -34,7 +33,7 @@ class ProfileServiceSpec extends Specification {
 
         then:
         1 * userHolder.userId >> userId
-        1 * profileRepository.countByTypeAndUserId(Type.CLUB, userId) >> 9
+        1 * profileRepository.countByTypeAndUserIdAndIsActiveTrue(Type.CLUB, userId) >> 9
         1 * profile.setType(Type.CLUB)
         1 * profile.setUserId(userId)
         1 * profile.setIsActive(Boolean.TRUE)
@@ -57,7 +56,7 @@ class ProfileServiceSpec extends Specification {
         then:
         1 * profileValidator.validateUserProfile(profile)
         1 * userHolder.userId >> userId
-        1 * profileRepository.findAllByTypeAndUserId(Type.USER, userId) >> []
+        1 * profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.USER, userId) >> []
         1 * profile.setType(Type.USER)
         1 * profile.setUserId(userId)
         1 * profile.setIsActive(Boolean.TRUE)
@@ -80,7 +79,7 @@ class ProfileServiceSpec extends Specification {
         then:
         1 * profileValidator.validateUserProfile(profile)
         1 * userHolder.userId >> userId
-        1 * profileRepository.findAllByTypeAndUserId(Type.USER, userId) >> [profile]
+        1 * profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.USER, userId) >> [profile]
         0 * _
 
         and:
@@ -97,7 +96,7 @@ class ProfileServiceSpec extends Specification {
 
         then:
         1 * userHolder.userId >> userId
-        1 * profileRepository.countByTypeAndUserId(Type.CLUB, userId) >> 10
+        1 * profileRepository.countByTypeAndUserIdAndIsActiveTrue(Type.CLUB, userId) >> 10
         0 * _
 
         and:
@@ -113,8 +112,9 @@ class ProfileServiceSpec extends Specification {
         Profile result = profileService.get(id)
 
         then:
-        1 * profileRepository.findByAlias('1') >> Optional.empty()
+        1 * profileRepository.findByAliasAndIsActiveTrue('1') >> Optional.empty()
         1 * profileRepository.findById(1L) >> Optional.of(profile)
+        1 * profile.isActive >> true
         0 * _
 
         and:
@@ -126,7 +126,7 @@ class ProfileServiceSpec extends Specification {
         Profile result = profileService.get('albvs')
 
         then:
-        1 * profileRepository.findByAlias('albvs') >> Optional.of(profile)
+        1 * profileRepository.findByAliasAndIsActiveTrue('albvs') >> Optional.of(profile)
         0 * _
 
         and:
@@ -141,7 +141,7 @@ class ProfileServiceSpec extends Specification {
         profileService.get(id)
 
         then:
-        1 * profileRepository.findByAlias('1') >> Optional.empty()
+        1 * profileRepository.findByAliasAndIsActiveTrue('1') >> Optional.empty()
         1 * profileRepository.findById(1L) >> Optional.empty()
         0 * _
 
@@ -155,7 +155,7 @@ class ProfileServiceSpec extends Specification {
         profileService.get('missing-alias')
 
         then:
-        1 * profileRepository.findByAlias('missing-alias') >> Optional.empty()
+        1 * profileRepository.findByAliasAndIsActiveTrue('missing-alias') >> Optional.empty()
         0 * _
 
         and:
@@ -172,7 +172,7 @@ class ProfileServiceSpec extends Specification {
 
         then:
         1 * userHolder.userId >> userId
-        1 * profileRepository.findAllByTypeAndUserId(Type.USER, userId) >> [profile]
+        1 * profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.USER, userId) >> [profile]
         0 * _
 
         and:
@@ -188,7 +188,7 @@ class ProfileServiceSpec extends Specification {
 
         then:
         1 * userHolder.userId >> userId
-        1 * profileRepository.findAllByTypeAndUserId(Type.USER, userId) >> []
+        1 * profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.USER, userId) >> []
         0 * _
 
         and:
@@ -196,11 +196,26 @@ class ProfileServiceSpec extends Specification {
         exception.message == 'No value present'
     }
 
+    def "get user profile by user id"() {
+        given:
+        Long userId = 1L
+
+        when:
+        Profile result = profileService.getUserProfile(userId)
+
+        then:
+        1 * profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.USER, userId) >> [profile]
+        0 * _
+
+        and:
+        result == profile
+    }
+
     def "update profile"() {
         given:
         Long profileId = 1L
         Long userId = 2L
-        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER)
+        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER, isActive: true)
         def update = new Profile(
                 firstName: 'Updated',
                 lastName: 'User',
@@ -216,7 +231,7 @@ class ProfileServiceSpec extends Specification {
         then:
         1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
         1 * userHolder.userId >> userId
-        1 * profileRepository.existsByAliasAndIdNot('alias', profileId) >> false
+        1 * profileRepository.existsByAliasAndIdNotAndIsActiveTrue('alias', profileId) >> false
         1 * profileRepository.save(persistentProfile) >> persistentProfile
         0 * _
 
@@ -234,7 +249,7 @@ class ProfileServiceSpec extends Specification {
         given:
         Long profileId = 1L
         Long currentUserId = 2L
-        def persistentProfile = new Profile(userId: 3L, type: Type.USER)
+        def persistentProfile = new Profile(userId: 3L, type: Type.USER, isActive: true)
         def update = new Profile(firstName: 'Updated', lastName: 'User')
 
         when:
@@ -254,7 +269,7 @@ class ProfileServiceSpec extends Specification {
         given:
         Long profileId = 1L
         Long userId = 2L
-        def persistentProfile = new Profile(userId: userId, type: Type.USER)
+        def persistentProfile = new Profile(userId: userId, type: Type.USER, isActive: true)
         def update = new Profile(firstName: 'Updated', lastName: 'User', alias: '12345')
 
         when:
@@ -274,7 +289,7 @@ class ProfileServiceSpec extends Specification {
         given:
         Long profileId = 1L
         Long userId = 2L
-        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER)
+        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER, isActive: true)
         def update = new Profile(firstName: 'Updated', lastName: 'User', alias: 'alias')
 
         when:
@@ -283,7 +298,7 @@ class ProfileServiceSpec extends Specification {
         then:
         1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
         1 * userHolder.userId >> userId
-        1 * profileRepository.existsByAliasAndIdNot('alias', profileId) >> true
+        1 * profileRepository.existsByAliasAndIdNotAndIsActiveTrue('alias', profileId) >> true
         0 * _
 
         and:
@@ -299,11 +314,49 @@ class ProfileServiceSpec extends Specification {
         List<Profile> result = profileService.getClubProfiles(userId)
 
         then:
-        1 * profileRepository.findAllByTypeAndUserId(Type.CLUB, userId) >> [profile]
+        1 * profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.CLUB, userId) >> [profile]
         0 * _
 
         and:
         result == [profile]
+    }
+
+    def "delete club profile"() {
+        given:
+        Long profileId = 1L
+        Long userId = 2L
+        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.CLUB, isActive: true)
+
+        when:
+        profileService.deleteClubProfile(profileId)
+
+        then:
+        1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
+        1 * userHolder.userId >> userId
+        1 * profileRepository.save(persistentProfile) >> persistentProfile
+        0 * _
+
+        and:
+        persistentProfile.isActive == false
+    }
+
+    def "delete user profile is forbidden"() {
+        given:
+        Long profileId = 1L
+        Long userId = 2L
+        def persistentProfile = new Profile(id: profileId, userId: userId, type: Type.USER, isActive: true)
+
+        when:
+        profileService.deleteClubProfile(profileId)
+
+        then:
+        1 * profileRepository.findById(profileId) >> Optional.of(persistentProfile)
+        1 * userHolder.userId >> userId
+        0 * _
+
+        and:
+        Exception exception = thrown IllegalArgumentException
+        exception.message == 'Only club profiles can be deleted'
     }
 
     def "add avatar"() {

@@ -77,6 +77,22 @@ class ProfileControllerSpec extends Specification {
         result == profileDto
     }
 
+    def "get user profile by user id"() {
+        given:
+        Long userId = 1L
+
+        when:
+        ProfileDto result = profileController.getUserProfile(userId)
+
+        then:
+        1 * profileService.getUserProfile(userId) >> profile
+        1 * mvcConversionService.convert(profile, ProfileDto.class) >> profileDto
+        0 * _
+
+        and:
+        result == profileDto
+    }
+
     def "update profile"() {
         given:
         Long id = 1L
@@ -120,6 +136,18 @@ class ProfileControllerSpec extends Specification {
 
         then:
         1 * profileService.uploadAvatar(profileId, imageDto)
+        0 * _
+    }
+
+    def "delete club profile"() {
+        given:
+        Long profileId = 1L
+
+        when:
+        profileController.deleteClubProfile(profileId)
+
+        then:
+        1 * profileService.deleteClubProfile(profileId)
         0 * _
     }
 }

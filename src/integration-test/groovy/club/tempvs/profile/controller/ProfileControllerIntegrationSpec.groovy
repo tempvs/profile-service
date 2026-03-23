@@ -22,6 +22,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -112,7 +113,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         String userInfoValue = buildUserInfoValue(1L)
 
         and:
-        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: 1L, type: Type.USER)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: 1L, isActive: true, type: Type.USER)
         profileRepository.save(profile)
 
         expect:
@@ -132,7 +133,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         String lastName = "lastName"
 
         and:
-        Profile profile = new Profile(firstName: firstName, lastName: lastName, userId: userId, type: Type.USER)
+        Profile profile = new Profile(firstName: firstName, lastName: lastName, userId: userId, isActive: true, type: Type.USER)
         profileRepository.save(profile)
 
         expect:
@@ -155,6 +156,7 @@ class ProfileControllerIntegrationSpec extends Specification {
                 lastName: 'lastName',
                 userId: userId,
                 alias: 'albvs',
+                isActive: true,
                 type: Type.USER
         )
         profileRepository.save(profile)
@@ -177,7 +179,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         String userInfoValue = buildUserInfoValue(userId)
 
         and:
-        Profile profile = new Profile(firstName: firstName, lastName: lastName, userId: userId, type: Type.USER)
+        Profile profile = new Profile(firstName: firstName, lastName: lastName, userId: userId, isActive: true, type: Type.USER)
         profileRepository.save(profile)
 
         expect:
@@ -191,6 +193,23 @@ class ProfileControllerIntegrationSpec extends Specification {
                     .andExpect(jsonPath("lastName", is(lastName)))
                     .andExpect(jsonPath("userId", is(userId.toInteger())))
                     .andExpect(jsonPath("type", is("USER")))
+    }
+
+    def "get user profile by user id"() {
+        given:
+        Long userId = 1L
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, alias: 'user-alias', isActive: true, type: Type.USER)
+        profileRepository.save(profile)
+
+        expect:
+        mvc.perform(get("/user-profile?userId=" + userId)
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("id", is(profile.id.intValue())))
+                .andExpect(jsonPath("alias", is("user-alias")))
+                .andExpect(jsonPath("type", is("USER")))
     }
 
     def "get user profile being unauthenticated"() {
@@ -219,7 +238,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         given:
         Long userId = 1L
         String userInfoValue = buildUserInfoValue(userId)
-        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, isActive: true, type: Type.USER)
         profileRepository.save(profile)
         String payload = """
         {
@@ -252,7 +271,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         given:
         Long userId = 1L
         String userInfoValue = buildUserInfoValue(userId)
-        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, isActive: true, type: Type.USER)
         profileRepository.save(profile)
         String payload = """
         {
@@ -276,8 +295,8 @@ class ProfileControllerIntegrationSpec extends Specification {
         given:
         Long userId = 1L
         String userInfoValue = buildUserInfoValue(userId)
-        profileRepository.save(new Profile(firstName: 'other', lastName: 'user', userId: 2L, alias: 'taken-alias', type: Type.USER))
-        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        profileRepository.save(new Profile(firstName: 'other', lastName: 'user', userId: 2L, alias: 'taken-alias', isActive: true, type: Type.USER))
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, isActive: true, type: Type.USER)
         profileRepository.save(profile)
         String payload = """
         {
@@ -306,8 +325,8 @@ class ProfileControllerIntegrationSpec extends Specification {
         String lastName2 = "lastName2"
 
         and:
-        Profile profile1 = new Profile(firstName: firstName1, lastName: lastName1, userId: userId, type: Type.CLUB)
-        Profile profile2 = new Profile(firstName: firstName2, lastName: lastName2, userId: userId, type: Type.CLUB)
+        Profile profile1 = new Profile(firstName: firstName1, lastName: lastName1, userId: userId, isActive: true, type: Type.CLUB)
+        Profile profile2 = new Profile(firstName: firstName2, lastName: lastName2, userId: userId, isActive: true, type: Type.CLUB)
         profileRepository.save(profile1)
         profileRepository.save(profile2)
 
@@ -327,6 +346,41 @@ class ProfileControllerIntegrationSpec extends Specification {
                     .andExpect(jsonPath('$[1]type', is('CLUB')))
     }
 
+    def "get club profiles excludes inactive"() {
+        given:
+        Long userId = 1L
+        profileRepository.save(new Profile(firstName: 'active', lastName: 'club', userId: userId, isActive: true, type: Type.CLUB))
+        profileRepository.save(new Profile(firstName: 'inactive', lastName: 'club', userId: userId, isActive: false, type: Type.CLUB))
+
+        expect:
+        mvc.perform(get("/club-profile?userId=" + userId)
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath('$[0]firstName', is('active')))
+                .andExpect(jsonPath('$[0]type', is('CLUB')))
+    }
+
+    def "delete club profile"() {
+        given:
+        Long userId = 1L
+        String userInfoValue = buildUserInfoValue(userId)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, isActive: true, type: Type.CLUB)
+        profileRepository.save(profile)
+
+        expect:
+        mvc.perform(delete('/profile/' + profile.id)
+                .accept(APPLICATION_JSON_VALUE)
+                .contentType(APPLICATION_JSON_VALUE)
+                .header(USER_INFO_HEADER, userInfoValue)
+                .header(AUTHORIZATION_HEADER, TOKEN))
+                .andExpect(status().isOk())
+
+        and:
+        !profileRepository.findById(profile.id).get().isActive
+    }
+
     def "upload avatar"() {
         given:
         Long userId = 1L
@@ -335,7 +389,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         String userInfoValue = buildUserInfoValue(userId)
 
         and:
-        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, type: Type.USER)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: userId, isActive: true, type: Type.USER)
         profileRepository.save(profile)
 
         expect:
@@ -355,7 +409,7 @@ class ProfileControllerIntegrationSpec extends Specification {
         String userInfoValue = buildUserInfoValue(1L)
 
         and:
-        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: 2L, type: Type.USER)
+        Profile profile = new Profile(firstName: 'firstName', lastName: 'lastName', userId: 2L, isActive: true, type: Type.USER)
         profileRepository.save(profile)
 
         expect:

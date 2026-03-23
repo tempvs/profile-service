@@ -15,7 +15,11 @@ public interface ProfileService {
 
     Profile getUserProfile();
 
+    Profile getUserProfile(Long userId);
+
     Profile update(Long id, Profile profile);
+
+    void deleteClubProfile(Long id);
 
     List<Profile> getClubProfiles(Long userId);
 

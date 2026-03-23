@@ -9,13 +9,13 @@ import java.util.Optional;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
 
-    List<Profile> findAllByTypeAndUserId(Type type, Long userId);
+    List<Profile> findAllByTypeAndUserIdAndIsActiveTrue(Type type, Long userId);
 
-    int countByTypeAndUserId(Type type, Long userId);
+    int countByTypeAndUserIdAndIsActiveTrue(Type type, Long userId);
 
-    Optional<Profile> findByAlias(String alias);
+    Optional<Profile> findByAliasAndIsActiveTrue(String alias);
 
-    boolean existsByAlias(String alias);
+    boolean existsByAliasAndIsActiveTrue(String alias);
 
-    boolean existsByAliasAndIdNot(String alias, Long id);
+    boolean existsByAliasAndIdNotAndIsActiveTrue(String alias, Long id);
 }

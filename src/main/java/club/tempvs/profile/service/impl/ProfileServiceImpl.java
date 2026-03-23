@@ -83,6 +83,14 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    public Profile getUserProfile(Long userId) {
+        return findUserProfileByUserId(userId)
+                .stream()
+                .findAny()
+                .get();
+    }
+
+    @Override
     public Profile update(Long id, Profile profile) {
         Profile persistentProfile = fetchProfile(id);
         Long currentUserId = userHolder.getUserId();
@@ -96,6 +104,23 @@ public class ProfileServiceImpl implements ProfileService {
         applyUpdates(persistentProfile, profile);
         persistentProfile.setAlias(normalizedAlias);
         return save(persistentProfile);
+    }
+
+    @Override
+    public void deleteClubProfile(Long id) {
+        Profile persistentProfile = fetchProfile(id);
+        Long currentUserId = userHolder.getUserId();
+
+        if (persistentProfile.getType() != Type.CLUB) {
+            throw new IllegalArgumentException("Only club profiles can be deleted");
+        }
+
+        if (!persistentProfile.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("Access denied");
+        }
+
+        persistentProfile.setIsActive(Boolean.FALSE);
+        save(persistentProfile);
     }
 
     @Override
@@ -116,11 +141,12 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public List<Profile> getClubProfiles(Long userId) {
-        return profileRepository.findAllByTypeAndUserId(Type.CLUB, userId);
+        return profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.CLUB, userId);
     }
 
     private Profile fetchProfile(Long id) {
         return profileRepository.findById(id)
+                .filter(profile -> Boolean.TRUE.equals(profile.getIsActive()))
                 .get();
     }
 
@@ -128,7 +154,7 @@ public class ProfileServiceImpl implements ProfileService {
         String candidate = aliasOrId == null ? "" : aliasOrId.trim();
 
         if (!candidate.isEmpty()) {
-            Optional<Profile> aliasProfile = profileRepository.findByAlias(candidate.toLowerCase(Locale.ROOT));
+            Optional<Profile> aliasProfile = profileRepository.findByAliasAndIsActiveTrue(candidate.toLowerCase(Locale.ROOT));
 
             if (aliasProfile.isPresent()) {
                 return aliasProfile.get();
@@ -147,11 +173,11 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private List<Profile> findUserProfileByUserId(Long userId) {
-        return profileRepository.findAllByTypeAndUserId(Type.USER, userId);
+        return profileRepository.findAllByTypeAndUserIdAndIsActiveTrue(Type.USER, userId);
     }
 
     private int countClubProfilesByUserId(Long userId) {
-        return profileRepository.countByTypeAndUserId(Type.CLUB, userId);
+        return profileRepository.countByTypeAndUserIdAndIsActiveTrue(Type.CLUB, userId);
     }
 
     private void validateUpdate(Profile profile, Type type) {
@@ -177,8 +203,8 @@ public class ProfileServiceImpl implements ProfileService {
         validateAlias(normalizedAlias);
 
         boolean aliasExists = profileId == null
-                ? profileRepository.existsByAlias(normalizedAlias)
-                : profileRepository.existsByAliasAndIdNot(normalizedAlias, profileId);
+                ? profileRepository.existsByAliasAndIsActiveTrue(normalizedAlias)
+                : profileRepository.existsByAliasAndIdNotAndIsActiveTrue(normalizedAlias, profileId);
 
         if (aliasExists) {
             throw new IllegalArgumentException("Alias is already in use");
